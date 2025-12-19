@@ -4,67 +4,73 @@ import torch
 from torchvision import transforms, models
 import torch.nn as nn
 import os
+import requests
+import urllib.parse
+
+# ==========================================
+# [설정] API 키 (main.py에서 가져옴)
+# ==========================================
+# 실제 배포 시에는 Streamlit Secrets 기능을 쓰는 것이 보안상 좋습니다.
+NAVER_CLIENT_ID = "2wR8x89ky2cwkwIspEyj"
+NAVER_CLIENT_SECRET = "uw_h22JCJR"
+WEATHER_API_KEY = "f9408d1bd75131dddadd813aaa4809b4"
 
 # ==========================================
 # [설정] 6개 작물별 모델 및 클래스 정의
 # ==========================================
-# 사용자가 제공한 정렬 순서("10"이 "9"보다 먼저 오는 문자열 정렬)에 맞춤
 CROP_CONFIG = {
     "고추 (Pepper)": {
         "model_file": "pepper_model.pth",
-        "classes": ['고추 (정상)', '고추 (마일드모틀바이러스)', '고추 (점무늬병)']  # 2_0, 2_3, 2_4
+        "classes": ['고추 (정상)', '고추 (마일드모틀바이러스)', '고추 (점무늬병)']
     },
     "딸기 (Strawberry)": {
         "model_file": "strawberry_model.pth",
-        "classes": ['딸기 (정상)', '딸기 (잿빛곰팡이병)', '딸기 (흰가루병)']  # 4_0, 4_7, 4_8
+        "classes": ['딸기 (정상)', '딸기 (잿빛곰팡이병)', '딸기 (흰가루병)']
     },
     "상추 (Lettuce)": {
         "model_file": "lettuce_model.pth",
-        "classes": ['상추 (정상)', '상추 (노균병)', '상추 (균핵병)']  # 5_0, 5_10, 5_9 (순서 중요!)
+        "classes": ['상추 (정상)', '상추 (노균병)', '상추 (균핵병)']
     },
     "오이 (Cucumber)": {
         "model_file": "cucumber_model.pth",
-        "classes": ['오이 (정상)', '오이 (모자이크바이러스)', '오이 (녹반모자이크바이러스)']  # 8_0, 8_15, 8_8
+        "classes": ['오이 (정상)', '오이 (모자이크바이러스)', '오이 (녹반모자이크바이러스)']
     },
     "토마토 (Tomato)": {
         "model_file": "tomato_model.pth",
-        "classes": ['토마토 (정상)', '토마토 (잎곰팡이병)', '토마토 (황화잎말이바이러스)']  # 11_0, 11_18, 11_19
+        "classes": ['토마토 (정상)', '토마토 (잎곰팡이병)', '토마토 (황화잎말이바이러스)']
     },
     "포도 (Grape)": {
         "model_file": "grape_model.pth",
-        "classes": ['포도 (정상)', '포도 (노균병)']  # 12_0, 12_20
+        "classes": ['포도 (정상)', '포도 (노균병)']
     }
 }
 
 
 # ==========================================
-# [함수] 모델 로드 및 전처리
+# [함수] 기능 구현 (모델, 날씨, 뉴스)
 # ==========================================
+
 @st.cache_resource
 def load_model_for_crop(crop_name):
-    """선택한 작물에 맞는 모델을 로드합니다."""
+    """선택한 작물에 맞는 모델 로드"""
     config = CROP_CONFIG[crop_name]
     model_path = config["model_file"]
     num_classes = len(config["classes"])
 
-    # 1. 모델 구조 생성 (MobileNetV3 Small)
     model = models.mobilenet_v3_small(weights=None)
     num_ftrs = model.classifier[3].in_features
     model.classifier[3] = nn.Linear(num_ftrs, num_classes)
 
-    # 2. 가중치 로드 (CPU 모드)
     if os.path.exists(model_path):
         map_location = torch.device('cpu')
         model.load_state_dict(torch.load(model_path, map_location=map_location))
         model.eval()
         return model
     else:
-        st.error(f"모델 파일({model_path})을 찾을 수 없습니다. GitHub에 파일을 업로드했는지 확인하세요.")
         return None
 
 
 def preprocess_image(image):
-    """이미지 전처리 (224x224, 정규화)"""
     transform = transforms.Compose([
         transforms.Resize((224, 224)),
         transforms.ToTensor(),
@@ -73,61 +79,123 @@ def preprocess_image(image):
     return transform(image).unsqueeze(0)
 
 
+def get_weather_info(city_name="Seoul"):
+    """OpenWeatherMap API 호출"""
+    try:
+        url = f"http://api.openweathermap.org/data/2.5/weather?q={city_name}&appid={WEATHER_API_KEY}&units=metric"
+        res = requests.get(url).json()
+        if res.get("cod") != 200:
+            return None
+        return {
+            "temp": res["main"]["temp"],
+            "humidity": res["main"]["humidity"],
+            "desc": res["weather"][0]["description"],
+            "city": res.get("name", city_name)
+        }
+    except:
+        return None
+
+
+def get_naver_news(keyword):
+    """네이버 뉴스 검색 API 호출"""
+    try:
+        encText = urllib.parse.quote(keyword)
+        url = "https://openapi.naver.com/v1/search/news?query=" + encText + "&display=3&sort=sim"
+        headers = {
+            "X-Naver-Client-Id": NAVER_CLIENT_ID,
+            "X-Naver-Client-Secret": NAVER_CLIENT_SECRET
+        }
+        response = requests.get(url, headers=headers)
+        if response.status_code == 200:
+            return response.json()['items']
+        else:
+            return []
+    except:
+        return []
+
+
 # ==========================================
 # [UI] 화면 구성
 # ==========================================
-st.set_page_config(page_title="농작물 병해 진단 통합 플랫폼", page_icon="🌿")
+st.set_page_config(page_title="농작물 병해 진단 플랫폼", page_icon="🌿")
 
 st.title("🌿 농작물 병해 진단 통합 플랫폼")
 st.markdown("---")
 
-# 1. 작물 선택하기
-st.subheader("1️⃣ 진단할 작물을 선택하세요")
-selected_crop = st.selectbox("작물 목록", list(CROP_CONFIG.keys()))
+# 사이드바: 설정
+with st.sidebar:
+    st.header("⚙️ 환경 설정")
+    selected_crop = st.selectbox("진단할 작물 선택", list(CROP_CONFIG.keys()))
+    city_name = st.text_input("현재 지역 (영문)", value="Seoul")
 
-# 2. 사진 업로드
-st.subheader("2️⃣ 사진을 업로드하세요")
-uploaded_file = st.file_uploader(f"{selected_crop} 사진 선택", type=["jpg", "png", "jpeg"])
+# 메인 화면
+st.subheader(f"1️⃣ {selected_crop} 사진 업로드")
+uploaded_file = st.file_uploader("사진을 선택하세요", type=["jpg", "png", "jpeg"])
 
 if uploaded_file is not None:
-    # 이미지 표시
     image = Image.open(uploaded_file).convert('RGB')
     st.image(image, caption='업로드된 이미지', use_column_width=True)
 
-    # 진단 버튼
-    if st.button("병해 진단 시작"):
-        with st.spinner(f"{selected_crop} 전용 AI 모델을 불러오는 중..."):
+    if st.button("🔍 병해 진단 및 환경 분석 시작"):
 
-            # 모델 로드
+        # 1. 병해 진단
+        with st.spinner("AI가 작물을 분석하고 있습니다..."):
             model = load_model_for_crop(selected_crop)
-
             if model:
-                try:
-                    # 추론 실행
-                    input_tensor = preprocess_image(image)
-                    with torch.no_grad():
-                        outputs = model(input_tensor)
-                        probabilities = torch.nn.functional.softmax(outputs[0], dim=0)
+                input_tensor = preprocess_image(image)
+                with torch.no_grad():
+                    outputs = model(input_tensor)
+                    probabilities = torch.nn.functional.softmax(outputs[0], dim=0)
+                    top_prob, top_idx = torch.max(probabilities, 0)
 
-                        # 결과 해석
-                        top_prob, top_idx = torch.max(probabilities, 0)
-                        class_names = CROP_CONFIG[selected_crop]["classes"]
-                        predicted_class = class_names[top_idx]
-                        confidence = top_prob.item() * 100
+                    class_names = CROP_CONFIG[selected_crop]["classes"]
+                    predicted_class = class_names[top_idx]
+                    confidence = top_prob.item() * 100
 
-                    # 결과 출력
-                    st.success("✅ 진단이 완료되었습니다!")
-                    st.metric(label="진단 결과", value=predicted_class)
-                    st.write(f"신뢰도(확률): **{confidence:.2f}%**")
+                st.success("✅ 분석 완료!")
+                st.metric(label="진단 결과", value=predicted_class)
+                st.progress(int(confidence))
+                st.caption(f"신뢰도: {confidence:.2f}%")
 
-                    # 확률 막대 그래프
-                    st.progress(int(confidence))
+                st.markdown("---")
 
-                    # (선택) 추가 조언
-                    if "정상" in predicted_class:
-                        st.info("작물이 건강해 보입니다! 주기적인 물 주기와 환기를 잊지 마세요.")
+                # 2. 날씨 정보 (2단 컬럼)
+                st.subheader("2️⃣ 실시간 재배 환경 분석")
+                weather = get_weather_info(city_name)
+
+                if weather:
+                    col1, col2, col3 = st.columns(3)
+                    col1.metric("지역", weather['city'])
+                    col2.metric("기온", f"{weather['temp']}°C")
+                    col3.metric("습도", f"{weather['humidity']}%")
+
+                    # 간단한 조언 로직
+                    if weather['humidity'] > 70:
+                        st.warning("습도가 높습니다! 곰팡이병 예방을 위해 환기가 필요합니다.")
                     else:
-                        st.warning("병해가 의심됩니다. 가까운 농업기술센터나 전문가에게 상담을 권장합니다.")
+                        st.info("현재 습도는 적정 수준입니다.")
+                else:
+                    st.error("날씨 정보를 불러올 수 없습니다. 지역명을 확인하세요.")
 
-                except Exception as e:
-                    st.error(f"오류가 발생했습니다: {e}")
+                st.markdown("---")
+
+                # 3. 관련 뉴스 (진단된 병명으로 검색)
+                st.subheader(f"3️⃣ '{predicted_class}' 관련 최신 방제 뉴스")
+
+                # 검색 키워드 정제 (괄호 제거 등)
+                search_keyword = predicted_class.split('(')[0] + " " + predicted_class.split('(')[-1].replace(')', '')
+                if "정상" in search_keyword:
+                    search_keyword = f"{selected_crop.split()[0]} 재배 기술"
+
+                news_items = get_naver_news(search_keyword)
+
+                if news_items:
+                    for item in news_items:
+                        title = item['title'].replace('<b>', '').replace('</b>', '').replace('&quot;', '"')
+                        link = item['link']
+                        st.markdown(f"- [{title}]({link})")
+                else:
+                    st.info("관련된 최신 뉴스가 없습니다.")
+
+            else:
+                st.error("모델 파일을 찾을 수 없습니다.")
