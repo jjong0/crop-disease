@@ -69,7 +69,7 @@ st.markdown("""
 
     /* 제목 스타일 */
     .section-title {
-        color: #2c3e50; border-bottom: 2px solid #eee; padding-bottom: 10px;
+        color: #000000; border-bottom: 2px solid #eee; padding-bottom: 10px;
         margin-bottom: 20px; font-size: 1.2rem; font-weight: bold;
     }
 
