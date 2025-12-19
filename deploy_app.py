@@ -33,7 +33,7 @@ st.markdown("""
 
     /* 2. 상단 여백 제거 (안전한 방식) */
     .block-container {
-        padding-top: 0px !important; /* 위쪽 여백을 0으로 설정 */
+        padding-top: 0px !important; 
         padding-bottom: 2rem !important;
     }
 
@@ -42,7 +42,7 @@ st.markdown("""
         display: none !important;
     }
 
-    /* 4. 커스텀 헤더 스타일 (잘림 방지 수정됨) */
+    /* 4. 커스텀 헤더 스타일 */
     .custom-header {
         background: #27ae60; 
         color: white; 
@@ -55,12 +55,10 @@ st.markdown("""
         display: flex; 
         align-items: center; 
         gap: 10px;
-
-        /* ★ [수정] 음수 마진 제거 -> 0으로 변경하여 잘림 방지 */
         margin-top: 0px !important; 
     }
 
-    /* 5. 컬럼(Column) 자체를 하얀색 카드로 만들기 */
+    /* 5. 컬럼 스타일 */
     [data-testid="column"] {
         background-color: white;
         border-radius: 15px;
@@ -215,15 +213,33 @@ with col_left:
                 else:
                     st.error("모델 파일이 없습니다.")
 
+    # ----------------------------------------------------
+    # ★ [수정됨] 결과를 흰색 카드 박스로 표시하여 가독성 개선 ★
+    # ----------------------------------------------------
     if 'last_pred' in st.session_state:
         pred = st.session_state['last_pred']
         conf = st.session_state['last_conf']
-        st.markdown(f"""
-        <div style="text-align: center; margin-top: 20px;">
-            <h2 style="color: #e74c3c; margin: 0;">{pred}</h2>
-            <p style="color: #7f8c8d;">신뢰도: {conf:.2f}%</p>
+
+        # HTML 카드 스타일 적용
+        html_code = f"""
+        <div style="
+            background-color: #FFFFFF;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            text-align: center;
+            border: 1px solid #e0e0e0;
+        ">
+            <p style="color: #666666; font-size: 14px; margin-bottom: 5px;">분석 결과</p>
+            <h2 style="color: #000000; font-weight: bold; margin: 0; margin-bottom: 10px;">{pred}</h2>
+            <p style="color: #4CAF50; font-weight: bold; font-size: 16px; margin: 0;">
+                신뢰도: {conf:.2f}%
+            </p>
         </div>
-        """, unsafe_allow_html=True)
+        """
+        st.markdown(html_code, unsafe_allow_html=True)
+
         st.progress(int(conf))
 
         weather = None
