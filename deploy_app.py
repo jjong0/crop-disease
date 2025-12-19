@@ -24,28 +24,50 @@ NAVER_CLIENT_SECRET = "uw_h22JCJR"
 WEATHER_API_KEY = "f9408d1bd75131dddadd813aaa4809b4"
 
 # ==========================================
-# [스타일] CSS (헤더 잘림 해결 및 폰트 색상 최적화)
+# [스타일] CSS (다크모드 글씨 안보임 해결 완벽 버전)
 # ==========================================
 st.markdown("""
 <style>
-    /* 1. 전체 배경색 */
-    .stApp { background-color: #f4f6f8; }
+    /* 1. 전체 배경색 및 기본 폰트 색상 강제 지정 */
+    .stApp { 
+        background-color: #f4f6f8;
+        color: #000000 !important; /* 기본 글자 검은색 */
+    }
 
-    /* 2. 상단 여백 제거 */
+    /* 2. 라디오 버튼, 체크박스 등 위젯 라벨 강제 검은색 (★중요★) */
+    .stRadio label p {
+        color: #000000 !important;
+        font-weight: bold;
+    }
+    .stRadio div[role='radiogroup'] {
+        color: #000000 !important;
+    }
+
+    /* 3. 일반 텍스트(p), 제목(h) 강제 검은색 */
+    p, h1, h2, h3, h4, h5, h6, span, label {
+        color: #000000 !important;
+    }
+
+    /* 4. 탭(Tabs) 글씨 색상 */
+    button[data-baseweb="tab"] div {
+        color: #000000 !important;
+    }
+
+    /* 5. 상단 여백 제거 */
     .block-container {
         padding-top: 0px !important; 
         padding-bottom: 2rem !important;
     }
 
-    /* 3. Streamlit 기본 헤더 숨기기 */
+    /* 6. Streamlit 기본 헤더 숨기기 */
     header[data-testid="stHeader"] {
         display: none !important;
     }
 
-    /* 4. 커스텀 헤더 스타일 */
+    /* 7. 커스텀 헤더 스타일 */
     .custom-header {
         background: #27ae60; 
-        color: white; 
+        color: white !important; /* 헤더 글씨는 흰색 유지 */
         padding: 20px; 
         font-size: 1.5rem; 
         font-weight: bold; 
@@ -57,8 +79,12 @@ st.markdown("""
         gap: 10px;
         margin-top: 0px !important; 
     }
+    /* 헤더 내부 텍스트는 흰색이어야 하므로 재지정 */
+    .custom-header span, .custom-header div {
+        color: white !important;
+    }
 
-    /* 5. 컬럼 스타일 */
+    /* 8. 컬럼 스타일 (카드 형태) */
     [data-testid="column"] {
         background-color: white;
         border-radius: 15px;
@@ -67,31 +93,38 @@ st.markdown("""
         border: 1px solid #eee;
     }
 
-    /* 제목 스타일 */
+    /* 9. 제목 스타일 */
     .section-title {
-        color: #2c3e50; border-bottom: 2px solid #eee; padding-bottom: 10px;
-        margin-bottom: 20px; font-size: 1.2rem; font-weight: bold;
+        color: #2c3e50 !important; 
+        border-bottom: 2px solid #eee; 
+        padding-bottom: 10px;
+        margin-bottom: 20px; 
+        font-size: 1.2rem; 
+        font-weight: bold;
     }
 
-    /* 날씨 박스 */
+    /* 10. 날씨 박스 */
     .weather-box {
-        background: #e3f2fd; padding: 15px; border-radius: 8px;
-        border-left: 5px solid #2196f3; margin-top: 15px;
-        color: #000000; /* 날씨 박스 글씨도 검은색 기본 설정 */
+        background: #e3f2fd; 
+        padding: 15px; 
+        border-radius: 8px;
+        border-left: 5px solid #2196f3; 
+        margin-top: 15px;
+        color: #000000 !important;
     }
 
-    /* 뉴스 아이템 */
+    /* 11. 뉴스 아이템 */
     .news-item { display: flex; gap: 15px; padding: 15px 0; border-bottom: 1px solid #f1f1f1; text-decoration: none; color: inherit; transition: background 0.2s; }
     .news-item:hover { background-color: #fafafa; }
-    .news-thumb { min-width: 80px; height: 80px; background: #eee; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #999; font-weight: bold; font-size: 0.8rem; }
+    .news-thumb { min-width: 80px; height: 80px; background: #eee; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #999 !important; font-weight: bold; font-size: 0.8rem; }
     .news-content { flex: 1; }
-    .news-title { font-weight: bold; font-size: 1rem; color: #333; display: block; margin-bottom: 5px;}
-    .news-desc { font-size: 0.85rem; color: #666; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-    .news-date { font-size: 0.75rem; color: #999; margin-top: 5px; }
+    .news-title { font-weight: bold; font-size: 1rem; color: #333 !important; display: block; margin-bottom: 5px;}
+    .news-desc { font-size: 0.85rem; color: #666 !important; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .news-date { font-size: 0.75rem; color: #999 !important; margin-top: 5px; }
 
-    /* 버튼 스타일 */
-    .stButton > button { width: 100%; background-color: #3498db; color: white; border-radius: 8px; font-weight: bold; border: none; }
-    .stButton > button:hover { background-color: #2980b9; color: white; }
+    /* 12. 버튼 스타일 */
+    .stButton > button { width: 100%; background-color: #3498db; color: white !important; border-radius: 8px; font-weight: bold; border: none; }
+    .stButton > button:hover { background-color: #2980b9; color: white !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -215,13 +248,13 @@ with col_left:
                     st.error("모델 파일이 없습니다.")
 
     # ----------------------------------------------------
-    # ★ [수정됨] 들여쓰기 제거하여 코드가 텍스트로 노출되는 문제 해결 ★
+    # ★ 결과 출력 카드 (검은색 글씨 고정) ★
     # ----------------------------------------------------
     if 'last_pred' in st.session_state:
         pred = st.session_state['last_pred']
         conf = st.session_state['last_conf']
 
-        # 주의: 아래 html_code 변수 안의 내용은 들여쓰기를 하지 않고 왼쪽 끝에 붙여야 합니다.
+        # HTML 코드는 들여쓰기 없이 작성해야 텍스트 노출 방지됨
         html_code = f"""
 <div style="background-color: #FFFFFF; padding: 20px; border-radius: 15px; margin: 20px 0; box-shadow: 0 4px 8px rgba(0,0,0,0.1); text-align: center; border: 1px solid #e0e0e0;">
 <p style="color: #000000; font-size: 14px; margin-bottom: 5px; font-weight: bold;">분석 결과</p>
@@ -242,7 +275,6 @@ with col_left:
             loc_label = "Seoul (위치 권한 없음)"
 
         if weather:
-            # 날씨 정보 박스 (내부 텍스트 색상도 검정 계열로 조정)
             st.markdown(f"""
             <div class="weather-box">
                 <strong style="color: #1565c0;">🌤️ 실시간 환경 분석 - {loc_label}</strong><br>
