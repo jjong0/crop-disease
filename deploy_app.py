@@ -1,5 +1,5 @@
 import streamlit as st
-from streamlit_js_eval import get_geolocation  # ★ GPS 라이브러리 (requirements.txt 확인 필수)
+from streamlit_js_eval import get_geolocation
 from PIL import Image
 import torch
 from torchvision import transforms, models
@@ -24,11 +24,17 @@ NAVER_CLIENT_SECRET = "uw_h22JCJR"
 WEATHER_API_KEY = "f9408d1bd75131dddadd813aaa4809b4"
 
 # ==========================================
-# [스타일] CSS (스크롤 및 레이아웃 수정됨)
+# [스타일] CSS (상단 여백 제거 + 카드 스타일)
 # ==========================================
 st.markdown("""
 <style>
     .stApp { background-color: #f4f6f8; }
+
+    /* ★ [수정] 상단 흰색 여백(Padding) 강제 제거 */
+    .block-container {
+        padding-top: 0rem !important;
+        padding-bottom: 2rem !important;
+    }
 
     /* 헤더 숨기기 */
     header[data-testid="stHeader"] { display: none; }
@@ -40,18 +46,16 @@ st.markdown("""
         box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 10px;
     }
 
-    /* ★ [수정됨] 카드 스타일: 높이 고정 및 스크롤 생성 */
+    /* 카드 스타일 */
     .css-card {
         background: white; border-radius: 15px; padding: 25px;
         box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px;
-        height: 80vh;       /* 화면 높이의 80%로 고정 */
-        overflow-y: auto;   /* 내용이 넘치면 스크롤바 생성 */
+        height: 80vh;       
+        overflow-y: auto;   
     }
 
-    /* 스크롤바 디자인 커스텀 */
     .css-card::-webkit-scrollbar { width: 8px; }
     .css-card::-webkit-scrollbar-thumb { background-color: #bdc3c7; border-radius: 4px; }
-    .css-card::-webkit-scrollbar-track { background-color: #f1f1f1; }
 
     .section-title {
         color: #2c3e50; border-bottom: 2px solid #eee; padding-bottom: 10px;
@@ -63,7 +67,7 @@ st.markdown("""
         border-left: 5px solid #2196f3; margin-top: 15px;
     }
 
-    /* 뉴스 아이템 스타일 */
+    /* 뉴스 아이템 */
     .news-item { display: flex; gap: 15px; padding: 15px 0; border-bottom: 1px solid #f1f1f1; text-decoration: none; color: inherit; transition: background 0.2s; }
     .news-item:hover { background-color: #fafafa; }
     .news-thumb { min-width: 80px; height: 80px; background: #eee; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #999; font-weight: bold; font-size: 0.8rem; }
@@ -72,7 +76,6 @@ st.markdown("""
     .news-desc { font-size: 0.85rem; color: #666; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
     .news-date { font-size: 0.75rem; color: #999; margin-top: 5px; }
 
-    /* 버튼 스타일 */
     .stButton > button { width: 100%; background-color: #3498db; color: white; border-radius: 8px; font-weight: bold; border: none; }
     .stButton > button:hover { background-color: #2980b9; color: white; }
 </style>
@@ -121,7 +124,6 @@ def preprocess_image(image):
     return transform(image).unsqueeze(0)
 
 
-# GPS 좌표로 날씨 가져오기
 def get_weather_by_coords(lat, lon):
     try:
         url = f"http://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={WEATHER_API_KEY}&units=metric"
@@ -137,7 +139,6 @@ def get_weather_by_coords(lat, lon):
         return None
 
 
-# (백업용) 도시 이름으로 날씨 가져오기
 def get_weather_by_city(city="Seoul"):
     try:
         url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&appid={WEATHER_API_KEY}&units=metric"
@@ -153,12 +154,12 @@ def get_weather_by_city(city="Seoul"):
         return None
 
 
-# ★ [수정됨] 뉴스 개수 20개로 증가
+# ★ [수정] 뉴스 개수 10개로 줄임
 def get_naver_news(keyword):
     try:
         encText = urllib.parse.quote(keyword)
-        # display=20 으로 설정
-        url = "https://openapi.naver.com/v1/search/news?query=" + encText + "&display=20&sort=sim"
+        # display=10 으로 수정 (너무 많으면 중복됨)
+        url = "https://openapi.naver.com/v1/search/news?query=" + encText + "&display=10&sort=sim"
         headers = {"X-Naver-Client-Id": NAVER_CLIENT_ID, "X-Naver-Client-Secret": NAVER_CLIENT_SECRET}
         response = requests.get(url, headers=headers)
         if response.status_code == 200: return response.json()['items']
@@ -170,6 +171,7 @@ def get_naver_news(keyword):
 # ==========================================
 # [UI] 화면 구성
 # ==========================================
+# 커스텀 헤더 (이제 맨 위에 딱 붙습니다)
 st.markdown('<div class="custom-header">🌿 스마트 팜 AI 플랫폼</div>', unsafe_allow_html=True)
 
 # GPS 요청
@@ -177,7 +179,7 @@ location = get_geolocation()
 
 col_left, col_right = st.columns([1.5, 1])
 
-# === 왼쪽 컬럼: 진단 및 날씨 ===
+# === 왼쪽 컬럼 ===
 with col_left:
     st.markdown('<div class="css-card">', unsafe_allow_html=True)
     st.markdown('<div class="section-title">🩺 작물 AI 진단</div>', unsafe_allow_html=True)
@@ -232,7 +234,7 @@ with col_left:
 
         st.progress(int(conf))
 
-        # 날씨 표시
+        # 날씨
         weather = None
         if location and 'coords' in location:
             lat = location['coords']['latitude']
@@ -252,7 +254,7 @@ with col_left:
             </div>
             """, unsafe_allow_html=True)
 
-        # 챗봇 (간략화)
+        # 챗봇
         st.write("---")
         st.subheader("💬 AI 농업 챗봇")
         if "messages" not in st.session_state: st.session_state.messages = []
@@ -281,7 +283,16 @@ with col_right:
     news_items = get_naver_news(keyword)
 
     if news_items:
+        # ★ [수정] 뉴스 중복 제거 로직 추가
+        seen_links = set()
+        unique_news = []
         for item in news_items:
+            if item['link'] not in seen_links:
+                seen_links.add(item['link'])
+                unique_news.append(item)
+
+        # 중복 제거된 리스트 출력
+        for item in unique_news:
             title = item['title'].replace('<b>', '').replace('</b>', '').replace('&quot;', '"')
             desc = item['description'].replace('<b>', '').replace('</b>', '').replace('&quot;', '"')
             link = item['link']
