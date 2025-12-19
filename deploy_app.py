@@ -24,14 +24,14 @@ NAVER_CLIENT_SECRET = "uw_h22JCJR"
 WEATHER_API_KEY = "f9408d1bd75131dddadd813aaa4809b4"
 
 # ==========================================
-# [스타일] CSS (헤더 잘림 해결 버전)
+# [스타일] CSS (헤더 잘림 해결 및 폰트 색상 최적화)
 # ==========================================
 st.markdown("""
 <style>
     /* 1. 전체 배경색 */
     .stApp { background-color: #f4f6f8; }
 
-    /* 2. 상단 여백 제거 (안전한 방식) */
+    /* 2. 상단 여백 제거 */
     .block-container {
         padding-top: 0px !important; 
         padding-bottom: 2rem !important;
@@ -77,6 +77,7 @@ st.markdown("""
     .weather-box {
         background: #e3f2fd; padding: 15px; border-radius: 8px;
         border-left: 5px solid #2196f3; margin-top: 15px;
+        color: #000000; /* 날씨 박스 글씨도 검은색 기본 설정 */
     }
 
     /* 뉴스 아이템 */
@@ -214,13 +215,13 @@ with col_left:
                     st.error("모델 파일이 없습니다.")
 
     # ----------------------------------------------------
-    # ★ [수정됨] 결과를 흰색 카드 박스로 표시하여 가독성 개선 ★
+    # ★ [수정됨] 결과를 흰색 카드 + 검은색 글씨로 고정 ★
     # ----------------------------------------------------
     if 'last_pred' in st.session_state:
         pred = st.session_state['last_pred']
         conf = st.session_state['last_conf']
 
-        # HTML 카드 스타일 적용
+        # HTML 카드 스타일 적용 (글자색 #000000 으로 강제 지정)
         html_code = f"""
         <div style="
             background-color: #FFFFFF;
@@ -231,8 +232,10 @@ with col_left:
             text-align: center;
             border: 1px solid #e0e0e0;
         ">
-            <p style="color: #666666; font-size: 14px; margin-bottom: 5px;">분석 결과</p>
+            <p style="color: #000000; font-size: 14px; margin-bottom: 5px; font-weight: bold;">분석 결과</p>
+
             <h2 style="color: #000000; font-weight: bold; margin: 0; margin-bottom: 10px;">{pred}</h2>
+
             <p style="color: #4CAF50; font-weight: bold; font-size: 16px; margin: 0;">
                 신뢰도: {conf:.2f}%
             </p>
@@ -251,11 +254,12 @@ with col_left:
             loc_label = "Seoul (위치 권한 없음)"
 
         if weather:
+            # 날씨 정보 박스 (내부 텍스트 색상도 검정 계열로 조정)
             st.markdown(f"""
             <div class="weather-box">
                 <strong style="color: #1565c0;">🌤️ 실시간 환경 분석 - {loc_label}</strong><br>
-                기온: <b>{weather['temp']}°C</b> / 습도: <b>{weather['humidity']}%</b><br>
-                <span style="font-size: 0.9rem; color: #555;">습도가 70% 이상이면 곰팡이병에 주의하세요.</span>
+                <span style="color: #000000;">기온: <b>{weather['temp']}°C</b> / 습도: <b>{weather['humidity']}%</b></span><br>
+                <span style="font-size: 0.9rem; color: #333333;">습도가 70% 이상이면 곰팡이병에 주의하세요.</span>
             </div>
             """, unsafe_allow_html=True)
 
