@@ -69,7 +69,7 @@ st.markdown("""
 
     /* 제목 스타일 */
     .section-title {
-        color: #000000; border-bottom: 2px solid #eee; padding-bottom: 10px;
+        color: #2c3e50; border-bottom: 2px solid #eee; padding-bottom: 10px;
         margin-bottom: 20px; font-size: 1.2rem; font-weight: bold;
     }
 
@@ -215,32 +215,20 @@ with col_left:
                     st.error("모델 파일이 없습니다.")
 
     # ----------------------------------------------------
-    # ★ [수정됨] 결과를 흰색 카드 + 검은색 글씨로 고정 ★
+    # ★ [수정됨] 들여쓰기 제거하여 코드가 텍스트로 노출되는 문제 해결 ★
     # ----------------------------------------------------
     if 'last_pred' in st.session_state:
         pred = st.session_state['last_pred']
         conf = st.session_state['last_conf']
 
-        # HTML 카드 스타일 적용 (글자색 #000000 으로 강제 지정)
+        # 주의: 아래 html_code 변수 안의 내용은 들여쓰기를 하지 않고 왼쪽 끝에 붙여야 합니다.
         html_code = f"""
-        <div style="
-            background-color: #FFFFFF;
-            padding: 20px;
-            border-radius: 15px;
-            margin: 20px 0;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            text-align: center;
-            border: 1px solid #e0e0e0;
-        ">
-            <p style="color: #000000; font-size: 14px; margin-bottom: 5px; font-weight: bold;">분석 결과</p>
-
-            <h2 style="color: #000000; font-weight: bold; margin: 0; margin-bottom: 10px;">{pred}</h2>
-
-            <p style="color: #4CAF50; font-weight: bold; font-size: 16px; margin: 0;">
-                신뢰도: {conf:.2f}%
-            </p>
-        </div>
-        """
+<div style="background-color: #FFFFFF; padding: 20px; border-radius: 15px; margin: 20px 0; box-shadow: 0 4px 8px rgba(0,0,0,0.1); text-align: center; border: 1px solid #e0e0e0;">
+<p style="color: #000000; font-size: 14px; margin-bottom: 5px; font-weight: bold;">분석 결과</p>
+<h2 style="color: #000000; font-weight: bold; margin: 0; margin-bottom: 10px;">{pred}</h2>
+<p style="color: #4CAF50; font-weight: bold; font-size: 16px; margin: 0;">신뢰도: {conf:.2f}%</p>
+</div>
+"""
         st.markdown(html_code, unsafe_allow_html=True)
 
         st.progress(int(conf))
