@@ -24,29 +24,45 @@ NAVER_CLIENT_SECRET = "uw_h22JCJR"
 WEATHER_API_KEY = "f9408d1bd75131dddadd813aaa4809b4"
 
 # ==========================================
-# [스타일] CSS (상단 여백 제거 + 카드 스타일)
+# [스타일] CSS (상단 여백 완벽 제거 버전)
 # ==========================================
 st.markdown("""
 <style>
+    /* 전체 배경색 */
     .stApp { background-color: #f4f6f8; }
 
-    /* ★ [수정] 상단 흰색 여백(Padding) 강제 제거 */
+    /* 1. 메인 컨테이너 위쪽 여백 강제 제거 */
     .block-container {
-        padding-top: 0rem !important;
-        padding-bottom: 2rem !important;
+        padding-top: 1rem !important; /* 0으로 하면 너무 붙어서 1rem 정도 줌 */
+        padding-bottom: 0rem !important;
+        max-width: 100% !important;
     }
 
-    /* 헤더 숨기기 */
-    header[data-testid="stHeader"] { display: none; }
+    /* 2. Streamlit 기본 헤더(햄버거 메뉴 등) 숨기기 */
+    header[data-testid="stHeader"] {
+        display: none;
+    }
 
-    /* 커스텀 헤더 */
+    /* 3. 커스텀 헤더 스타일 (위로 끌어올리기) */
     .custom-header {
-        background: #27ae60; color: white; padding: 20px; font-size: 1.5rem;
-        font-weight: bold; border-radius: 0 0 10px 10px; margin-bottom: 20px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 10px;
+        background: #27ae60; 
+        color: white; 
+        padding: 15px 20px; 
+        font-size: 1.5rem;
+        font-weight: bold; 
+        border-radius: 0 0 10px 10px; 
+        margin-bottom: 20px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
+        display: flex; 
+        align-items: center; 
+        gap: 10px;
+
+        /* ★ [핵심] 음수 마진으로 강제로 위로 올림 */
+        margin-top: -60px !important; 
+        z-index: 999;
     }
 
-    /* 카드 스타일 */
+    /* 카드 스타일 (높이 고정 및 스크롤) */
     .css-card {
         background: white; border-radius: 15px; padding: 25px;
         box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px;
@@ -54,20 +70,19 @@ st.markdown("""
         overflow-y: auto;   
     }
 
+    /* 스크롤바 디자인 */
     .css-card::-webkit-scrollbar { width: 8px; }
     .css-card::-webkit-scrollbar-thumb { background-color: #bdc3c7; border-radius: 4px; }
 
+    /* 기타 폰트 및 버튼 스타일 */
     .section-title {
         color: #2c3e50; border-bottom: 2px solid #eee; padding-bottom: 10px;
         margin-bottom: 20px; font-size: 1.2rem; font-weight: bold;
     }
-
     .weather-box {
         background: #e3f2fd; padding: 15px; border-radius: 8px;
         border-left: 5px solid #2196f3; margin-top: 15px;
     }
-
-    /* 뉴스 아이템 */
     .news-item { display: flex; gap: 15px; padding: 15px 0; border-bottom: 1px solid #f1f1f1; text-decoration: none; color: inherit; transition: background 0.2s; }
     .news-item:hover { background-color: #fafafa; }
     .news-thumb { min-width: 80px; height: 80px; background: #eee; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #999; font-weight: bold; font-size: 0.8rem; }
@@ -75,7 +90,6 @@ st.markdown("""
     .news-title { font-weight: bold; font-size: 1rem; color: #333; display: block; margin-bottom: 5px;}
     .news-desc { font-size: 0.85rem; color: #666; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
     .news-date { font-size: 0.75rem; color: #999; margin-top: 5px; }
-
     .stButton > button { width: 100%; background-color: #3498db; color: white; border-radius: 8px; font-weight: bold; border: none; }
     .stButton > button:hover { background-color: #2980b9; color: white; }
 </style>
@@ -154,11 +168,10 @@ def get_weather_by_city(city="Seoul"):
         return None
 
 
-# ★ [수정] 뉴스 개수 10개로 줄임
 def get_naver_news(keyword):
     try:
         encText = urllib.parse.quote(keyword)
-        # display=10 으로 수정 (너무 많으면 중복됨)
+        # 뉴스 10개로 제한
         url = "https://openapi.naver.com/v1/search/news?query=" + encText + "&display=10&sort=sim"
         headers = {"X-Naver-Client-Id": NAVER_CLIENT_ID, "X-Naver-Client-Secret": NAVER_CLIENT_SECRET}
         response = requests.get(url, headers=headers)
@@ -171,7 +184,7 @@ def get_naver_news(keyword):
 # ==========================================
 # [UI] 화면 구성
 # ==========================================
-# 커스텀 헤더 (이제 맨 위에 딱 붙습니다)
+# ★ [핵심] 커스텀 헤더 (margin-top: -60px 적용됨)
 st.markdown('<div class="custom-header">🌿 스마트 팜 AI 플랫폼</div>', unsafe_allow_html=True)
 
 # GPS 요청
@@ -283,7 +296,7 @@ with col_right:
     news_items = get_naver_news(keyword)
 
     if news_items:
-        # ★ [수정] 뉴스 중복 제거 로직 추가
+        # 뉴스 중복 제거
         seen_links = set()
         unique_news = []
         for item in news_items:
@@ -291,7 +304,6 @@ with col_right:
                 seen_links.add(item['link'])
                 unique_news.append(item)
 
-        # 중복 제거된 리스트 출력
         for item in unique_news:
             title = item['title'].replace('<b>', '').replace('</b>', '').replace('&quot;', '"')
             desc = item['description'].replace('<b>', '').replace('</b>', '').replace('&quot;', '"')
