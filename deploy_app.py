@@ -24,32 +24,43 @@ NAVER_CLIENT_SECRET = "uw_h22JCJR"
 WEATHER_API_KEY = "f9408d1bd75131dddadd813aaa4809b4"
 
 # ==========================================
-# [스타일] CSS (컬럼 자체를 카드로 변신시킴)
+# [스타일] CSS (헤더 잘림 해결 버전)
 # ==========================================
 st.markdown("""
 <style>
-    /* 전체 배경색 */
+    /* 1. 전체 배경색 */
     .stApp { background-color: #f4f6f8; }
 
-    /* 상단 여백 제거 */
+    /* 2. 상단 여백 제거 (안전한 방식) */
     .block-container {
-        padding-top: 1rem !important;
+        padding-top: 0px !important; /* 위쪽 여백을 0으로 설정 */
         padding-bottom: 2rem !important;
     }
 
-    /* 기본 헤더 숨기기 */
-    header[data-testid="stHeader"] { display: none; }
-
-    /* 커스텀 헤더 (위로 붙이기) */
-    .custom-header {
-        background: #27ae60; color: white; padding: 15px 20px; 
-        font-size: 1.5rem; font-weight: bold; border-radius: 0 0 10px 10px; 
-        margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
-        display: flex; align-items: center; gap: 10px;
-        margin-top: -60px !important; z-index: 999;
+    /* 3. Streamlit 기본 헤더 숨기기 */
+    header[data-testid="stHeader"] {
+        display: none !important;
     }
 
-    /* ★ [핵심] 컬럼(Column) 자체를 하얀색 카드로 만들기 */
+    /* 4. 커스텀 헤더 스타일 (잘림 방지 수정됨) */
+    .custom-header {
+        background: #27ae60; 
+        color: white; 
+        padding: 20px; 
+        font-size: 1.5rem; 
+        font-weight: bold; 
+        border-radius: 0 0 10px 10px; 
+        margin-bottom: 20px; 
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
+        display: flex; 
+        align-items: center; 
+        gap: 10px;
+
+        /* ★ [수정] 음수 마진 제거 -> 0으로 변경하여 잘림 방지 */
+        margin-top: 0px !important; 
+    }
+
+    /* 5. 컬럼(Column) 자체를 하얀색 카드로 만들기 */
     [data-testid="column"] {
         background-color: white;
         border-radius: 15px;
@@ -171,7 +182,6 @@ col_left, col_right = st.columns([1.5, 1], gap="medium")
 
 # === 왼쪽 컬럼: 진단 ===
 with col_left:
-    # ★ HTML 카드 태그를 제거했습니다 (CSS가 자동으로 카드로 만들어줍니다)
     st.markdown('<div class="section-title">🩺 작물 AI 진단</div>', unsafe_allow_html=True)
 
     selected_crop = st.radio("작물을 선택하세요", list(CROP_CONFIG.keys()), horizontal=True)
@@ -256,7 +266,7 @@ with col_right:
     keyword = keyword.split('(')[0] + " 방제"
     news_items = get_naver_news(keyword)
 
-    # ★ [핵심] 뉴스 전용 스크롤 컨테이너 (높이 600px 고정)
+    # 뉴스 스크롤 컨테이너
     with st.container(height=600, border=False):
         if news_items:
             seen_links = set()
