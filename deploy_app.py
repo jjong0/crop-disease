@@ -13,7 +13,7 @@ import json
 # [설정] 페이지 및 API 키
 # ==========================================
 st.set_page_config(
-    page_title="스마트 팜 AI 진단",
+    page_title="스마트 팜",
     page_icon="🌿",
     layout="wide",
     initial_sidebar_state="collapsed"
@@ -207,14 +207,14 @@ def get_naver_news(keyword):
 # ==========================================
 # [UI] 화면 구성
 # ==========================================
-st.markdown('<div class="custom-header">🌿 스마트 팜 AI 플랫폼</div>', unsafe_allow_html=True)
+st.markdown('<div class="custom-header">🌿 스마트 팜</div>', unsafe_allow_html=True)
 location = get_geolocation()
 
 col_left, col_right = st.columns([1.5, 1], gap="medium")
 
 # === 왼쪽 컬럼: 진단 ===
 with col_left:
-    st.markdown('<div class="section-title">🩺 작물 AI 진단</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-title">🩺 작물 진단</div>', unsafe_allow_html=True)
 
     selected_crop = st.radio("작물을 선택하세요", list(CROP_CONFIG.keys()), horizontal=True)
     st.write("---")
