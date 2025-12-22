@@ -314,6 +314,11 @@ with col_left:
             loc_label = "Seoul (위치 권한 없음)"
 
         if weather:
+            st.session_state["predicted_class"] = predicted_class
+            st.session_state["predicted_prob"] = top_prob.item()
+            st.session_state["temperature"] = weather["temp"]
+            st.session_state["humidity"] = weather["humidity"]
+
             st.markdown(f"""
             <div class="weather-box">
                 <strong style="color: #1565c0;">🌤️ 실시간 환경 분석 - {loc_label}</strong><br>
