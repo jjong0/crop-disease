@@ -507,21 +507,6 @@ with col_left:
             "종합한 관리 참고 지표이며, 실제 병 발생 확률을 의미하지 않습니다."
         )
 
-        st.write("---")
-        st.subheader("💬 AI 농업 챗봇")
-        if "messages" not in st.session_state: st.session_state.messages = []
-        for msg in st.session_state.messages:
-            with st.chat_message(msg["role"]): st.markdown(msg["content"])
-        if prompt := st.chat_input("질문을 입력하세요"):
-            st.session_state.messages.append({"role": "user", "content": prompt})
-            with st.chat_message("user"):
-                st.markdown(prompt)
-            reply = f"'{pred}'에 대한 답변: 전문가와 상담하세요."
-            if "예방" in prompt: reply = "통풍과 배수가 가장 중요합니다."
-            with st.chat_message("assistant"):
-                st.markdown(reply)
-            st.session_state.messages.append({"role": "assistant", "content": reply})
-
         disease_name = pred.split("(")[-1].replace(")", "").strip()
 
         risk_info = CROP_CONFIG[selected_crop].get("risk_env", {}).get(disease_name)
@@ -558,7 +543,20 @@ with col_left:
         </div>
         """, unsafe_allow_html=True)
 
-
+        st.write("---")
+        st.subheader("💬 AI 농업 챗봇")
+        if "messages" not in st.session_state: st.session_state.messages = []
+        for msg in st.session_state.messages:
+            with st.chat_message(msg["role"]): st.markdown(msg["content"])
+        if prompt := st.chat_input("질문을 입력하세요"):
+            st.session_state.messages.append({"role": "user", "content": prompt})
+            with st.chat_message("user"):
+                st.markdown(prompt)
+            reply = f"'{pred}'에 대한 답변: 전문가와 상담하세요."
+            if "예방" in prompt: reply = "통풍과 배수가 가장 중요합니다."
+            with st.chat_message("assistant"):
+                st.markdown(reply)
+            st.session_state.messages.append({"role": "assistant", "content": reply})
 
 # === 오른쪽 컬럼: 뉴스 ===
 with col_right:
