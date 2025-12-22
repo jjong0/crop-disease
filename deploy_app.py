@@ -135,7 +135,30 @@ CROP_CONFIG = {
     "고추": {"file": "pepper_model.pth", "classes": ['고추 (정상)', '고추 (마일드모틀바이러스)', '고추 (점무늬병)']},
     "토마토": {"file": "tomato_model.pth", "classes": ['토마토 (정상)', '토마토 (잎곰팡이병)', '토마토 (황화잎말이바이러스)']},
     "딸기": {"file": "strawberry_model.pth", "classes": ['딸기 (정상)', '딸기 (잿빛곰팡이병)', '딸기 (흰가루병)']},
-    "상추": {"file": "lettuce_model.pth", "classes": ['상추 (정상)', '상추 (노균병)', '상추 (균핵병)']},
+    "상추": {"file": "lettuce_model.pth", "classes": ['상추 (정상)', '상추 (노균병)', '상추 (균핵병)'], "risk_env": {
+            "상추 (노균병)": {
+                "습도": "85% 이상 상대습도",
+                "기온": "15~23℃",
+                "특징": "저온다습한 환경에서 빠르게 발생·확산",
+            },
+            "상추 (균핵병)": {
+                "습도": "80% 이상",
+                "기온": "15~25℃",
+                "특징": "과습 토양과 연작에서 발생 증가",
+            }
+        },
+        "causes": {
+            "상추 (노균병)": [
+                "노균병균 포자가 물방울 또는 비에 의해 잎 표면에 부착되어 감염 시작",
+                "높은 상대습도(85% 이상)와 잎 표면 수분은 포자 발아를 촉진",
+                "기온 15~23℃ 정도의 환경이 병원균 생육에 유리함"
+            ],
+            "상추 (균핵병)": [
+                "균핵병균이 저온 다습한 조건에서 토양 내에 남아 연작으로 축적",
+                "과습 및 통풍 불량 환경은 병 발생을 증가시킴",
+                "질소 비료 과다 시 잎 조직 연약화로 감염 위험 상승"
+            ]
+        }},
     "오이": {"file": "cucumber_model.pth", "classes": ['오이 (정상)', '오이 (모자이크바이러스)', '오이 (녹반모자이크바이러스)']},
     "포도": {"file": "grape_model.pth", "classes": ['포도 (정상)', '포도 (노균병)']}
 }
@@ -314,8 +337,8 @@ with col_left:
             loc_label = "Seoul (위치 권한 없음)"
 
         if weather:
-            st.session_state["predicted_class"] = predicted_class
-            st.session_state["predicted_prob"] = top_prob.item()
+            st.session_state["predicted_class"] = pred
+            st.session_state["predicted_prob"] = conf / 100  # 확률값
             st.session_state["temperature"] = weather["temp"]
             st.session_state["humidity"] = weather["humidity"]
 
@@ -373,6 +396,39 @@ with col_left:
             "※ 본 결과는 이미지 분류 모델 출력과 기상 조건을 "
             "종합한 관리 참고 지표이며, 실제 병 발생 확률을 의미하지 않습니다."
         )
+        risk_info = CROP_CONFIG[selected_crop].get("risk_env", {}).get(pred)
+        cause_info = CROP_CONFIG[selected_crop].get("causes", {}).get(pred)
+
+        if risk_info or cause_info:
+            risk_html = ""
+            cause_html = ""
+
+            if risk_info:
+                risk_html = f"""
+        <b>• 취약 환경 조건</b><br>
+        - 습도: {risk_info['습도']}<br>
+        - 기온: {risk_info['기온']}<br>
+        - 특징: {risk_info['특징']}<br><br>
+        """
+
+            if cause_info:
+                cause_items = "".join([f"<li>{c}</li>" for c in cause_info])
+                cause_html = f"""
+        <b>• 발병 원인</b>
+        <ul style="margin-left:20px;">{cause_items}</ul>
+        """
+
+            st.markdown(f"""
+        <div style="background:#fff8e1; padding:16px; border-radius:14px;
+                    border-left:6px solid #ffeb3b; margin-top:15px;">
+        <b>📊 병해 취약 환경 & 발병 원인</b><br><br>
+        {risk_html}
+        {cause_html}
+        <div style="font-size:0.85rem; color:#555;">
+        출처: 농촌진흥청 농사로, EOS Crop Disease Guide
+        </div>
+        </div>
+        """, unsafe_allow_html=True)
 
         st.write("---")
         st.subheader("💬 AI 농업 챗봇")
