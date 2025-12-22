@@ -132,9 +132,81 @@ st.markdown("""
 # [설정] 모델 정보
 # ==========================================
 CROP_CONFIG = {
-    "고추": {"file": "pepper_model.pth", "classes": ['고추 (정상)', '고추 (마일드모틀바이러스)', '고추 (점무늬병)']},
-    "토마토": {"file": "tomato_model.pth", "classes": ['토마토 (정상)', '토마토 (잎곰팡이병)', '토마토 (황화잎말이바이러스)']},
-    "딸기": {"file": "strawberry_model.pth", "classes": ['딸기 (정상)', '딸기 (잿빛곰팡이병)', '딸기 (흰가루병)']},
+    "고추": {"file": "pepper_model.pth", "classes": ['고추 (정상)', '고추 (마일드모틀바이러스)', '고추 (점무늬병)'],
+        "risk_env": {
+            "점무늬병": {
+                "습도": "다습한 환경 (상대습도 80% 이상)",
+                "기온": "20~30℃",
+                "특징": "장마철, 통풍 불량 시 급속 확산"
+            },
+            "마일드모틀바이러스": {
+                "습도": "환경 영향은 적으나 밀식 시 확산 위험 증가",
+                "기온": "20~28℃",
+                "특징": "종자·토양·작업 도구를 통한 기계적 전염"
+            }
+        },
+        "causes": {
+            "점무늬병": [
+                "병원성 곰팡이(Alternaria spp.) 감염",
+                "고온다습한 재배 환경",
+                "연작 및 잔재물 관리 미흡"
+            ],
+            "마일드모틀바이러스": [
+                "감염된 종자를 통한 초기 전염",
+                "오염된 토양 및 잔재물 접촉",
+                "작업자 손, 농기구에 의한 기계적 전파"
+            ]
+        }},
+    "토마토": {"file": "tomato_model.pth", "classes": ['토마토 (정상)', '토마토 (잎곰팡이병)', '토마토 (황화잎말이바이러스)'],
+        "risk_env": {
+            "잎곰팡이병": {
+                "습도": "상대습도 85% 이상",
+                "기온": "18~25℃",
+                "특징": "시설 재배에서 통풍 불량 시 급속 확산"
+            },
+            "황화잎말이바이러스": {
+                "습도": "기상 영향 적음",
+                "기온": "20~30℃",
+                "특징": "담배가루이 매개 전염"
+            }
+        },
+        "causes": {
+            "잎곰팡이병": [
+                "Cladosporium fulvum 곰팡이 감염",
+                "고습·결로 발생 환경",
+                "시설 내 환기 부족"
+            ],
+            "황화잎말이바이러스": [
+                "담배가루이에 의한 매개 전염",
+                "감염 묘 유입",
+                "연중 재배로 인한 매개충 상존"
+            ]
+        }},
+    "딸기": {"file": "strawberry_model.pth", "classes": ['딸기 (정상)', '딸기 (잿빛곰팡이병)', '딸기 (흰가루병)'],
+        "risk_env": {
+            "잿빛곰팡이병": {
+                "습도": "상대습도 90% 이상",
+                "기온": "15~23℃",
+                "특징": "개화기·과실기 고습 시 다발"
+            },
+            "흰가루병": {
+                "습도": "중간 습도",
+                "기온": "18~25℃",
+                "특징": "일교차 크고 밀식 시 발생"
+            }
+        },
+        "causes": {
+            "잿빛곰팡이병": [
+                "Botrytis cinerea 감염",
+                "과습 및 환기 부족",
+                "낙화·상처 부위 감염"
+            ],
+            "흰가루병": [
+                "Podosphaera aphanis 감염",
+                "밀식 재배",
+                "건조 후 급격한 습도 변화"
+            ]
+        }},
     "상추": {"file": "lettuce_model.pth", "classes": ['상추 (정상)', '상추 (노균병)', '상추 (균핵병)'], "risk_env": {
             "상추 (노균병)": {
                 "습도": "85% 이상 상대습도",
@@ -159,8 +231,46 @@ CROP_CONFIG = {
                 "질소 비료 과다 시 잎 조직 연약화로 감염 위험 상승"
             ]
         }},
-    "오이": {"file": "cucumber_model.pth", "classes": ['오이 (정상)', '오이 (모자이크바이러스)', '오이 (녹반모자이크바이러스)']},
-    "포도": {"file": "grape_model.pth", "classes": ['포도 (정상)', '포도 (노균병)']}
+    "오이": {"file": "cucumber_model.pth", "classes": ['오이 (정상)', '오이 (모자이크바이러스)', '오이 (녹반모자이크바이러스)'],
+        "risk_env": {
+            "모자이크바이러스": {
+                "습도": "기상 영향 적음",
+                "기온": "20~30℃",
+                "특징": "진딧물 매개, 접촉 전염"
+            },
+            "녹반모자이크바이러스": {
+                "습도": "환경 영향 적음",
+                "기온": "22~30℃",
+                "특징": "종자·토양·도구 통한 기계적 전염"
+            }
+        },
+        "causes": {
+            "모자이크바이러스": [
+                "진딧물 매개 전염",
+                "감염 묘 사용",
+                "작업 중 접촉 감염"
+            ],
+            "녹반모자이크바이러스": [
+                "감염 종자 유입",
+                "오염된 토양 및 농기구",
+                "재배 중 기계적 접촉"
+            ]
+        }},
+    "포도": {"file": "grape_model.pth", "classes": ['포도 (정상)', '포도 (노균병)'],
+        "risk_env": {
+            "노균병": {
+                "습도": "상대습도 85% 이상",
+                "기온": "18~25℃",
+                "특징": "강우 후 잎 뒷면에 급속 확산"
+            }
+        },
+        "causes": {
+            "노균병": [
+                "Plasmopara viticola 감염",
+                "잦은 강우 및 결로",
+                "통풍 불량한 수관 구조"
+            ]
+        }}
 }
 
 
@@ -396,25 +506,42 @@ with col_left:
             "※ 본 결과는 이미지 분류 모델 출력과 기상 조건을 "
             "종합한 관리 참고 지표이며, 실제 병 발생 확률을 의미하지 않습니다."
         )
-        st.warning("📌 병해 설명 블록 진입")
 
         disease_name = pred.split("(")[-1].replace(")", "").strip()
 
-        st.write("DEBUG disease_name:", disease_name)
+        risk_info = CROP_CONFIG[selected_crop].get("risk_env", {}).get(disease_name)
+        cause_info = CROP_CONFIG[selected_crop].get("causes", {}).get(disease_name)
 
-        risk_env_dict = CROP_CONFIG.get(selected_crop, {}).get("risk_env", {})
-        cause_dict = CROP_CONFIG.get(selected_crop, {}).get("causes", {})
+        if risk_info or cause_info:
+            risk_html = ""
+            cause_html = ""
 
-        st.write("DEBUG risk_env keys:", risk_env_dict.keys())
-        st.write("DEBUG causes keys:", cause_dict.keys())
+            if risk_info:
+                risk_html = f"""
+        <b>• 취약 환경 조건</b><br>
+        - 습도: {risk_info['습도']}<br>
+        - 기온: {risk_info['기온']}<br>
+        - 특징: {risk_info['특징']}<br><br>
+        """
 
-        risk_info = risk_env_dict.get(disease_name)
-        cause_info = cause_dict.get(disease_name)
+            if cause_info:
+                cause_items = "".join([f"<li>{c}</li>" for c in cause_info])
+                cause_html = f"""
+        <b>• 발병 원인</b>
+        <ul style="margin-left:20px;">{cause_items}</ul>
+        """
 
-        if not risk_info and not cause_info:
-            st.info("ℹ️ 해당 병해에 대한 환경/원인 정보가 등록되어 있지 않습니다.")
-        else:
-            st.success("✅ 병해 설명 데이터 매칭 성공")
+            st.markdown(f"""
+        <div style="background:#fff8e1; padding:16px; border-radius:14px;
+                    border-left:6px solid #ffeb3b; margin-top:15px;">
+        <b>📊 병해 취약 환경 & 발병 원인</b><br><br>
+        {risk_html}
+        {cause_html}
+        <div style="font-size:0.85rem; color:#555;">
+        출처: 농촌진흥청 농사로, EOS Crop Disease Guide, FAO Plant Disease Compendium
+        </div>
+        </div>
+        """, unsafe_allow_html=True)
 
         st.write("---")
         st.subheader("💬 AI 농업 챗봇")
