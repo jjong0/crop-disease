@@ -396,8 +396,11 @@ with col_left:
             "※ 본 결과는 이미지 분류 모델 출력과 기상 조건을 "
             "종합한 관리 참고 지표이며, 실제 병 발생 확률을 의미하지 않습니다."
         )
-        risk_info = CROP_CONFIG[selected_crop].get("risk_env", {}).get(pred)
-        cause_info = CROP_CONFIG[selected_crop].get("causes", {}).get(pred)
+
+        disease_name = pred.split("(")[-1].replace(")", "").strip()
+
+        risk_info = CROP_CONFIG[selected_crop].get("risk_env", {}).get(disease_name)
+        cause_info = CROP_CONFIG[selected_crop].get("causes", {}).get(disease_name)
 
         if risk_info or cause_info:
             risk_html = ""
