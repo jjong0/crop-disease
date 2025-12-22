@@ -396,42 +396,25 @@ with col_left:
             "※ 본 결과는 이미지 분류 모델 출력과 기상 조건을 "
             "종합한 관리 참고 지표이며, 실제 병 발생 확률을 의미하지 않습니다."
         )
+        st.warning("📌 병해 설명 블록 진입")
 
         disease_name = pred.split("(")[-1].replace(")", "").strip()
 
-        risk_info = CROP_CONFIG[selected_crop].get("risk_env", {}).get(disease_name)
-        cause_info = CROP_CONFIG[selected_crop].get("causes", {}).get(disease_name)
+        st.write("DEBUG disease_name:", disease_name)
 
-        if risk_info or cause_info:
-            risk_html = ""
-            cause_html = ""
+        risk_env_dict = CROP_CONFIG.get(selected_crop, {}).get("risk_env", {})
+        cause_dict = CROP_CONFIG.get(selected_crop, {}).get("causes", {})
 
-            if risk_info:
-                risk_html = f"""
-        <b>• 취약 환경 조건</b><br>
-        - 습도: {risk_info['습도']}<br>
-        - 기온: {risk_info['기온']}<br>
-        - 특징: {risk_info['특징']}<br><br>
-        """
+        st.write("DEBUG risk_env keys:", risk_env_dict.keys())
+        st.write("DEBUG causes keys:", cause_dict.keys())
 
-            if cause_info:
-                cause_items = "".join([f"<li>{c}</li>" for c in cause_info])
-                cause_html = f"""
-        <b>• 발병 원인</b>
-        <ul style="margin-left:20px;">{cause_items}</ul>
-        """
+        risk_info = risk_env_dict.get(disease_name)
+        cause_info = cause_dict.get(disease_name)
 
-            st.markdown(f"""
-        <div style="background:#fff8e1; padding:16px; border-radius:14px;
-                    border-left:6px solid #ffeb3b; margin-top:15px;">
-        <b>📊 병해 취약 환경 & 발병 원인</b><br><br>
-        {risk_html}
-        {cause_html}
-        <div style="font-size:0.85rem; color:#555;">
-        출처: 농촌진흥청 농사로, EOS Crop Disease Guide
-        </div>
-        </div>
-        """, unsafe_allow_html=True)
+        if not risk_info and not cause_info:
+            st.info("ℹ️ 해당 병해에 대한 환경/원인 정보가 등록되어 있지 않습니다.")
+        else:
+            st.success("✅ 병해 설명 데이터 매칭 성공")
 
         st.write("---")
         st.subheader("💬 AI 농업 챗봇")
