@@ -507,43 +507,6 @@ with col_left:
             "종합한 관리 참고 지표이며, 실제 병 발생 확률을 의미하지 않습니다."
         )
 
-
-# === 오른쪽 컬럼: 뉴스 ===
-with col_right:
-    st.markdown('<div class="section-title">📰 관련 농업 뉴스</div>', unsafe_allow_html=True)
-
-    keyword = st.session_state.get('last_pred', f"{selected_crop} 병해충")
-    keyword = keyword.split('(')[0] + " 방제"
-    news_items = get_naver_news(keyword)
-
-    # 뉴스 스크롤 컨테이너
-    with st.container(height=600, border=False):
-        if news_items:
-            seen_links = set()
-            unique_news = []
-            for item in news_items:
-                if item['link'] not in seen_links:
-                    seen_links.add(item['link'])
-                    unique_news.append(item)
-
-            for item in unique_news:
-                title = item['title'].replace('<b>', '').replace('</b>', '').replace('&quot;', '"')
-                desc = item['description'].replace('<b>', '').replace('</b>', '').replace('&quot;', '"')
-                link = item['link']
-                date = item['pubDate'][:16]
-                st.markdown(f"""
-                <a href="{link}" target="_blank" class="news-item">
-                    <div class="news-thumb">NEWS</div>
-                    <div class="news-content">
-                        <span class="news-title">{title}</span>
-                        <span class="news-desc">{desc}</span>
-                        <div class="news-date">{date}</div>
-                    </div>
-                </a>
-                """, unsafe_allow_html=True)
-        else:
-            st.info("관련 뉴스를 찾을 수 없습니다.")
-
         disease_name = pred.split("(")[-1].replace(")", "").strip()
 
         risk_info = CROP_CONFIG[selected_crop].get("risk_env", {}).get(disease_name)
@@ -594,3 +557,39 @@ with col_right:
             with st.chat_message("assistant"):
                 st.markdown(reply)
             st.session_state.messages.append({"role": "assistant", "content": reply})
+
+# === 오른쪽 컬럼: 뉴스 ===
+with col_right:
+    st.markdown('<div class="section-title">📰 관련 농업 뉴스</div>', unsafe_allow_html=True)
+
+    keyword = st.session_state.get('last_pred', f"{selected_crop} 병해충")
+    keyword = keyword.split('(')[0] + " 방제"
+    news_items = get_naver_news(keyword)
+
+    # 뉴스 스크롤 컨테이너
+    with st.container(height=600, border=False):
+        if news_items:
+            seen_links = set()
+            unique_news = []
+            for item in news_items:
+                if item['link'] not in seen_links:
+                    seen_links.add(item['link'])
+                    unique_news.append(item)
+
+            for item in unique_news:
+                title = item['title'].replace('<b>', '').replace('</b>', '').replace('&quot;', '"')
+                desc = item['description'].replace('<b>', '').replace('</b>', '').replace('&quot;', '"')
+                link = item['link']
+                date = item['pubDate'][:16]
+                st.markdown(f"""
+                <a href="{link}" target="_blank" class="news-item">
+                    <div class="news-thumb">NEWS</div>
+                    <div class="news-content">
+                        <span class="news-title">{title}</span>
+                        <span class="news-desc">{desc}</span>
+                        <div class="news-date">{date}</div>
+                    </div>
+                </a>
+                """, unsafe_allow_html=True)
+        else:
+            st.info("관련 뉴스를 찾을 수 없습니다.")
