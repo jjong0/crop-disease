@@ -321,6 +321,53 @@ with col_left:
                 <span style="font-size: 0.9rem; color: #333333;">습도가 70% 이상이면 곰팡이병에 주의하세요.</span>
             </div>
             """, unsafe_allow_html=True)
+        # ===============================
+        # 병해 + 기상 기반 위험 추세 분석
+        # ===============================
+
+        top1_class = st.session_state["predicted_class"]
+        top1_prob = st.session_state["predicted_prob"] * 100
+        temp = st.session_state["temperature"]
+        humidity = st.session_state["humidity"]
+
+        model_confident = top1_prob >= 70
+        high_risk_weather = (humidity >= 80) and (temp >= 25)
+
+        if model_confident and high_risk_weather:
+            risk_level = "높음"
+            color = "#ffebee"
+            border = "#f44336"
+        elif model_confident or high_risk_weather:
+            risk_level = "중간"
+            color = "#fff8e1"
+            border = "#ff9800"
+        else:
+            risk_level = "낮음"
+            color = "#e8f5e9"
+            border = "#4caf50"
+
+        st.markdown(f"""
+        <div style="background:{color}; padding:18px; border-radius:14px;
+                    border-left:6px solid {border}; margin-top:15px;">
+        <b>📈 병해 확산 위험 추세 분석</b><br><br>
+
+        <b>• 모델 예측 결과</b><br>
+        - 주요 병해 유형: <b>{top1_class}</b><br>
+        - 모델 분류 신뢰도: <b>{top1_prob:.1f}%</b><br><br>
+
+        <b>• 환경 조건 분석</b><br>
+        - 평균 기온: {temp}℃<br>
+        - 평균 습도: {humidity}%<br><br>
+
+        <b>▶ 종합 판단</b><br>
+        병해 확산 위험 추세: <b>{risk_level}</b>
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.caption(
+            "※ 본 결과는 이미지 분류 모델 출력과 기상 조건을 "
+            "종합한 관리 참고 지표이며, 실제 병 발생 확률을 의미하지 않습니다."
+        )
 
         st.write("---")
         st.subheader("💬 AI 농업 챗봇")
