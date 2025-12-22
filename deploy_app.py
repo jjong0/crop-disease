@@ -239,6 +239,25 @@ with col_left:
                         outputs = model(input_tensor)
                         probabilities = torch.nn.functional.softmax(outputs[0], dim=0)
                         top_prob, top_idx = torch.max(probabilities, 0)
+                        # 상위 2개 클래스 확률 추출 (불확실성 계산용)
+                        top2 = torch.topk(probabilities, 2)
+                        confidence_gap = (top2.values[0] - top2.values[1]).item() * 100
+
+                        # 불확실성 레벨 정의 (설명용)
+                        if confidence_gap >= 30:
+                            certainty_level = "높음"
+                        elif confidence_gap >= 15:
+                            certainty_level = "보통"
+                        else:
+                            certainty_level = "낮음"
+
+                        # 세션 저장
+                        st.session_state['confidence_gap'] = confidence_gap
+                        st.session_state['certainty_level'] = certainty_level
+                        st.session_state['top2_classes'] = [
+                            CROP_CONFIG[selected_crop]["classes"][top2.indices[0]],
+                            CROP_CONFIG[selected_crop]["classes"][top2.indices[1]]
+                        ]
                         class_names = CROP_CONFIG[selected_crop]["classes"]
                         predicted_class = class_names[top_idx]
                         confidence = top_prob.item() * 100
@@ -263,6 +282,26 @@ with col_left:
 </div>
 """
         st.markdown(html_code, unsafe_allow_html=True)
+
+        # ==============================
+        # 🧠 모델 예측 신뢰성 설명
+        # ==============================
+        gap = st.session_state['confidence_gap']
+        level = st.session_state['certainty_level']
+        top2_cls = st.session_state['top2_classes']
+
+        st.markdown(f"""
+        <div style="background:#f1f8e9; padding:15px; border-radius:12px; margin-top:10px; border-left:5px solid #8bc34a;">
+        <b>🧠 모델 예측 신뢰성 설명</b><br>
+        예측 확실성 수준: <b>{level}</b><br>
+        1순위–2순위 예측 확률 차이: <b>{gap:.1f}%</b><br>
+        <span style="font-size:0.9rem;">
+        모델은 <b>{top2_cls[0]}</b>와 <b>{top2_cls[1]}</b> 사이에서 상대적으로 더 높은 확률을 보였습니다.
+        </span>
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.caption("※ 본 정보는 모델 출력 분포를 설명하기 위한 것으로, 최종 진단을 대체하지 않습니다.")
 
         st.progress(int(conf))
 
