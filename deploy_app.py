@@ -7,7 +7,7 @@ import torch.nn as nn
 import os
 import requests
 import urllib.parse
-import re  # 정규표현식 (태그 제거용)
+import re
 
 # ==========================================
 # [설정] 페이지 및 API 키
@@ -61,43 +61,99 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==========================================
-# [설정] 모델 및 질병 정보
+# [설정] 모델 및 질병 정보 (데이터베이스)
 # ==========================================
 CROP_CONFIG = {
     "고추": {"file": "pepper_model.pth", "classes": ['고추 (정상)', '고추 (마일드모틀바이러스)', '고추 (점무늬병)'],
            "risk_env": {
                "점무늬병": {"습도": "80% 이상", "기온": "20~30℃", "특징": "장마철, 통풍 불량 시 급속 확산"},
                "마일드모틀바이러스": {"습도": "영향 적음", "기온": "20~28℃", "특징": "작업 도구, 토양 전염"}
+           },
+           "control": {
+               "점무늬병": {
+                   "chemical": "아족시스트로빈 수화제, 디페노코나졸 유제 (발병 초 10일 간격 살포)",
+                   "eco_friendly": "병든 잎과 과실은 즉시 제거하여 소각, 질소질 비료 과다 사용 금지"
+               },
+               "마일드모틀바이러스": {
+                   "chemical": "치료제 없음 (진딧물 방제약: 이미다클로프리드 미리 살포)",
+                   "eco_friendly": "작업 전 손/도구를 10% 탈지분유액이나 비눗물로 세척하여 전염 방지"
+               }
            }},
     "토마토": {"file": "tomato_model.pth", "classes": ['토마토 (정상)', '토마토 (잎곰팡이병)', '토마토 (황화잎말이바이러스)'],
             "risk_env": {
                 "잎곰팡이병": {"습도": "85% 이상", "기온": "18~25℃", "특징": "시설 내 과습 시 발생"},
                 "황화잎말이바이러스": {"습도": "영향 적음", "기온": "20~30℃", "특징": "담배가루이 매개"}
+            },
+            "control": {
+                "잎곰팡이병": {
+                    "chemical": "플루트리아폴 액상수화제, 트리폭린 유제",
+                    "eco_friendly": "하우스 환기 철저, 밀식 방지, 병든 잎 조기 제거"
+                },
+                "황화잎말이바이러스": {
+                    "chemical": "다이아지논, 스피노사드 (담배가루이 방제)",
+                    "eco_friendly": "측창/출입구에 50메쉬 이상 방충망 설치, 황색 끈끈이 트랩 사용"
+                }
             }},
     "딸기": {"file": "strawberry_model.pth", "classes": ['딸기 (정상)', '딸기 (잿빛곰팡이병)', '딸기 (흰가루병)'],
            "risk_env": {
                "잿빛곰팡이병": {"습도": "90% 이상", "기온": "15~23℃", "특징": "저온 다습 환경"},
                "흰가루병": {"습도": "건조~다습 반복", "기온": "18~25℃", "특징": "일교차 클 때 발생"}
+           },
+           "control": {
+               "잿빛곰팡이병": {
+                   "chemical": "펜헥사미드 액상수화제, 이프로디온 수화제",
+                   "eco_friendly": "수정 후 꽃잎 제거, 과습 방지를 위한 멀칭 및 환기"
+               },
+               "흰가루병": {
+                   "chemical": "폴리옥신비 수화제, 훼나리 유제",
+                   "eco_friendly": "난황유(계란노른자+식용유) 0.3% 희석액 살포"
+               }
            }},
     "상추": {"file": "lettuce_model.pth", "classes": ['상추 (정상)', '상추 (노균병)', '상추 (균핵병)'],
            "risk_env": {
                "상추 (노균병)": {"습도": "85% 이상", "기온": "15~23℃", "특징": "저온다습 시 급속 확산"},
                "상추 (균핵병)": {"습도": "80% 이상", "기온": "15~25℃", "특징": "연작지 토양 전염"}
+           },
+           "control": {
+               "상추 (노균병)": {
+                   "chemical": "디메토모르프 수화제, 아목시스트로빈",
+                   "eco_friendly": "배수 관리 철저, 병든 잎 조기 제거하여 전염원 차단"
+               },
+               "상추 (균핵병)": {
+                   "chemical": "프로사이미돈 수화제, 플루디옥소닐",
+                   "eco_friendly": "재배 후 태양열 소독, 토양 깊이갈이, 담수 처리"
+               }
            }},
     "오이": {"file": "cucumber_model.pth", "classes": ['오이 (정상)', '오이 (모자이크바이러스)', '오이 (녹반모자이크바이러스)'],
            "risk_env": {
                "모자이크바이러스": {"습도": "영향 적음", "기온": "20~30℃", "특징": "진딧물 매개"},
                "녹반모자이크바이러스": {"습도": "영향 적음", "기온": "22~30℃", "특징": "토양, 종자 전염"}
+           },
+           "control": {
+               "모자이크바이러스": {
+                   "chemical": "진딧물 방제약(이미다클로프리드) 주기적 살포",
+                   "eco_friendly": "주변 잡초 제거(서식처 파괴), 진딧물 천적 활용"
+               },
+               "녹반모자이크바이러스": {
+                   "chemical": "치료 약제 없음 (예방 필수)",
+                   "eco_friendly": "감염 포기 즉시 제거, 작업 도구 및 손 소독 철저"
+               }
            }},
     "포도": {"file": "grape_model.pth", "classes": ['포도 (정상)', '포도 (노균병)'],
            "risk_env": {
                "노균병": {"습도": "85% 이상", "기온": "18~25℃", "특징": "비 온 뒤 급격 확산"}
+           },
+           "control": {
+               "노균병": {
+                   "chemical": "디메토모르프, 사이아조파미드 액상수화제",
+                   "eco_friendly": "비가림 재배 실시, 질소질 비료 과용 금지, 봉지 씌우기"
+               }
            }}
 }
 
 
 # ==========================================
-# [함수] 데이터 로드 및 크롤링/API
+# [함수] 데이터 로드 및 API
 # ==========================================
 @st.cache_resource
 def load_model_for_crop(crop_name):
@@ -156,44 +212,24 @@ def get_naver_news(keyword):
         return []
 
 
-# ★ [신규] 방제 정보 실시간 검색 (지식백과 API 활용)
-def get_control_info_dynamic(crop, disease):
-    if '정상' in disease:
-        return "특별한 방제가 필요하지 않습니다. 현재 상태를 유지하세요."
-
-    # 검색 키워드: 작물명 + 병해명 + 방제
-    clean_disease = disease.split('(')[-1].replace(')', '').strip()
-    keyword = f"{crop} {clean_disease} 방제"
-
-    try:
-        # 네이버 지식백과(encyc) 검색 - 농업 기술 정보가 많음
-        encText = urllib.parse.quote(keyword)
-        url = "https://openapi.naver.com/v1/search/encyc.json?query=" + encText + "&display=3&sort=sim"
-        headers = {"X-Naver-Client-Id": NAVER_CLIENT_ID, "X-Naver-Client-Secret": NAVER_CLIENT_SECRET}
-
-        response = requests.get(url, headers=headers)
-        if response.status_code == 200:
-            items = response.json()['items']
-            if items:
-                # HTML 태그 제거 및 요약
-                raw_text = items[0]['description']
-                clean_text = re.sub('<[^<]+?>', '', raw_text)  # 태그 제거
-                return clean_text
-            else:
-                return "관련 방제 정보를 찾을 수 없습니다. 아래 농촌진흥청 링크를 확인하세요."
-        return "방제 정보 검색 실패 (통신 오류)"
-    except:
-        return "방제 정보 검색 중 오류 발생"
-
-
+# ★ [수정됨] 검색 API 대신 '정확한 내부 데이터'를 우선 사용하도록 변경
 def generate_prescription(crop_name, disease, humidity, temp):
     prescription = {
         "risk_score": 0, "risk_label": "안전", "color": "green",
-        "action_plan": [], "control_info": "검색 중..."
+        "action_plan": [], "chemical": "-", "eco_friendly": "-"
     }
 
-    # 1. [동적 데이터] 방제 정보 크롤링/검색
-    prescription['control_info'] = get_control_info_dynamic(crop_name, disease)
+    # 0. 병해 이름 정제
+    clean_disease = disease.split('(')[-1].replace(')', '').strip()
+
+    # 1. 내부 데이터베이스에서 정확한 방제 정보 가져오기 (짤림 방지)
+    controls = CROP_CONFIG[crop_name].get("control", {}).get(clean_disease)
+    if controls:
+        prescription['chemical'] = controls['chemical']
+        prescription['eco_friendly'] = controls['eco_friendly']
+    else:
+        prescription['chemical'] = "해당 병해에 대한 구체적 약제 정보가 없습니다."
+        prescription['eco_friendly'] = "일반적인 위생 관리를 철저히 하세요."
 
     # 2. 곰팡이류 위험도 분석
     if any(x in disease for x in ['탄저', '곰팡이', '노균', '무늬']):
@@ -351,13 +387,13 @@ with col_right:
             st.info("관련 뉴스를 찾을 수 없습니다.")
 
     # ---------------------------------------------------------
-    # AI 스마트 처방전 (DSS) - 실시간 검색 연동
+    # AI 스마트 처방전 (DSS) - 데이터 기반 + 상세 검색 링크
     # ---------------------------------------------------------
     st.write("---")
     st.subheader("📋 AI 스마트 방제 처방전")
 
     if 'last_pred' in st.session_state and 'temp' in st.session_state:
-        # 처방전 생성 실행 (동적 검색 포함)
+        # 처방전 생성 실행
         rx = generate_prescription(selected_crop, st.session_state['last_pred'], st.session_state['humid'],
                                    st.session_state['temp'])
 
@@ -370,16 +406,24 @@ with col_right:
         for action in rx['action_plan']:
             st.write(f"- {action}")
 
-        # 3. 실시간 방제 정보 (네이버 API 검색 결과)
-        st.success("**💊 추천 약제 및 관리법 (실시간 검색)**")
-        st.write(rx['control_info'])
-        st.caption("※ 출처: 네이버 지식백과 (농업기술센터 연동)")
+        # 3. 약제 및 관리법 (정확한 내부 데이터 사용)
+        if rx['chemical'] != "-":
+            st.success("**💊 추천 약제 및 관리법 (AI 추천)**")
 
-        # 4. 농촌진흥청 시스템 바로가기 버튼 (크롤링 불가 페이지 대응)
+            # 탭으로 깔끔하게 분리
+            t1, t2 = st.tabs(["🧪 화학적 방제 (약제)", "🌿 친환경 방제"])
+            with t1:
+                st.write(f"**추천 약제:**\n{rx['chemical']}")
+                st.caption("※ 약제 저항성 방지를 위해 작용 기작이 다른 약제를 교호 살포하세요.")
+            with t2:
+                st.write(f"**관리 방법:**\n{rx['eco_friendly']}")
+                st.caption("※ 예방 위주의 관리가 치료보다 중요합니다.")
+
+        # 4. 농촌진흥청 검색 바로가기 (짤리지 않은 상세 정보용)
         st.markdown("""
-        <a href="https://ncpms.rda.go.kr/npms/Main.np" target="_blank" style="text-decoration:none;">
+        <a href="https://ncpms.rda.go.kr/npms/NewIndcUserListR.np" target="_blank" style="text-decoration:none;">
             <div style="background-color:#4CAF50; color:white; padding:10px; border-radius:5px; text-align:center; font-weight:bold; margin-top:10px;">
-                🔍 농촌진흥청 농약안전정보시스템(NCPMS) 검색 바로가기
+                🔍 더 자세한 농약 정보 검색 (농촌진흥청 이동)
             </div>
         </a>
         """, unsafe_allow_html=True)
@@ -392,7 +436,7 @@ with col_right:
         st.markdown(f"""
         <div style="margin-top:10px; padding:15px; background-color:{bg_color}; border-left: 5px solid {border_color}; border-radius:5px;">
             <b>🤖 AI 종합 판단 Report</b><br>
-            현재 기상(습도 {st.session_state['humid']}%)과 검색된 방제 정보를 종합 분석한 결과, 
+            현재 기상(습도 {st.session_state['humid']}%)과 병해 특성을 종합 분석한 결과, 
             <b>{msg}</b>
         </div>
         """, unsafe_allow_html=True)
