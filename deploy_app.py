@@ -545,7 +545,7 @@ with col_left:
 
 
 
-# === 오른쪽 컬럼: 뉴스 ===
+# === 오른쪽 컬럼: 뉴스 + 분석 ===
 with col_right:
     st.markdown('<div class="section-title">📰 관련 농업 뉴스</div>', unsafe_allow_html=True)
 
@@ -553,23 +553,20 @@ with col_right:
     keyword = keyword.split('(')[0] + " 방제"
     news_items = get_naver_news(keyword)
 
-    # 뉴스 스크롤 컨테이너
-    with st.container(height=600, border=False):
+    with st.container(height=450, border=False):
         if news_items:
             seen_links = set()
-            unique_news = []
             for item in news_items:
-                if item['link'] not in seen_links:
-                    seen_links.add(item['link'])
-                    unique_news.append(item)
+                if item['link'] in seen_links:
+                    continue
+                seen_links.add(item['link'])
 
-            for item in unique_news:
-                title = item['title'].replace('<b>', '').replace('</b>', '').replace('&quot;', '"')
-                desc = item['description'].replace('<b>', '').replace('</b>', '').replace('&quot;', '"')
-                link = item['link']
+                title = item['title'].replace('<b>', '').replace('</b>', '')
+                desc = item['description'].replace('<b>', '').replace('</b>', '')
                 date = item['pubDate'][:16]
+
                 st.markdown(f"""
-                <a href="{link}" target="_blank" class="news-item">
+                <a href="{item['link']}" target="_blank" class="news-item">
                     <div class="news-thumb">NEWS</div>
                     <div class="news-content">
                         <span class="news-title">{title}</span>
@@ -581,17 +578,83 @@ with col_right:
         else:
             st.info("관련 뉴스를 찾을 수 없습니다.")
 
-    st.write("---")
-    st.subheader("💬 AI 농업 챗봇")
-    if "messages" not in st.session_state: st.session_state.messages = []
-    for msg in st.session_state.messages:
-        with st.chat_message(msg["role"]): st.markdown(msg["content"])
-    if prompt := st.chat_input("질문을 입력하세요"):
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
-            st.markdown(prompt)
-        reply = f"'{pred}'에 대한 답변: 전문가와 상담하세요."
-        if "예방" in prompt: reply = "통풍과 배수가 가장 중요합니다."
-        with st.chat_message("assistant"):
-            st.markdown(reply)
-        st.session_state.messages.append({"role": "assistant", "content": reply})
+    # =====================================================
+    # 📈 병해 확산 위험 추세 분석 (챗봇 위치 대체)
+    # =====================================================
+    if "predicted_class" in st.session_state:
+        top1_class = st.session_state["predicted_class"]
+        top1_prob = st.session_state["predicted_prob"] * 100
+        temp = st.session_state["temperature"]
+        humidity = st.session_state["humidity"]
+
+        model_confident = top1_prob >= 70
+        high_risk_weather = (humidity >= 80) and (temp >= 25)
+
+        if model_confident and high_risk_weather:
+            risk_level = "높음"
+            color = "#ffebee"
+            border = "#f44336"
+        elif model_confident or high_risk_weather:
+            risk_level = "중간"
+            color = "#fff8e1"
+            border = "#ff9800"
+        else:
+            risk_level = "낮음"
+            color = "#e8f5e9"
+            border = "#4caf50"
+
+        st.markdown(f"""
+        <div style="background:{color}; padding:18px; border-radius:14px;
+                    border-left:6px solid {border}; margin-top:20px;">
+        <b>📈 병해 확산 위험 추세 분석</b><br><br>
+
+        <b>• 예측 병해</b>: {top1_class}<br>
+        <b>• 모델 신뢰도</b>: {top1_prob:.1f}%<br><br>
+
+        <b>• 현재 환경</b><br>
+        - 기온: {temp}℃<br>
+        - 습도: {humidity}%<br><br>
+
+        <b>▶ 종합 위험 수준</b>: <b>{risk_level}</b>
+        </div>
+        """, unsafe_allow_html=True)
+
+    # =====================================================
+    # 📊 병해 취약 환경 & 발병 원인
+    # =====================================================
+    if "last_pred" in st.session_state:
+        disease_name = st.session_state["last_pred"].split("(")[-1].replace(")", "").strip()
+
+        risk_info = CROP_CONFIG[selected_crop].get("risk_env", {}).get(disease_name)
+        cause_info = CROP_CONFIG[selected_crop].get("causes", {}).get(disease_name)
+
+        if risk_info or cause_info:
+            risk_html = ""
+            cause_html = ""
+
+            if risk_info:
+                risk_html = f"""
+                <b>• 취약 환경 조건</b><br>
+                - 습도: {risk_info['습도']}<br>
+                - 기온: {risk_info['기온']}<br>
+                - 특징: {risk_info['특징']}<br><br>
+                """
+
+            if cause_info:
+                cause_items = "".join([f"<li>{c}</li>" for c in cause_info])
+                cause_html = f"""
+                <b>• 발병 원인</b>
+                <ul style="margin-left:20px;">{cause_items}</ul>
+                """
+
+            st.markdown(f"""
+            <div style="background:#fff8e1; padding:16px; border-radius:14px;
+                        border-left:6px solid #ffeb3b; margin-top:15px;">
+            <b>📊 병해 취약 환경 & 발병 원인</b><br><br>
+            {risk_html}
+            {cause_html}
+            <div style="font-size:0.8rem; color:#555;">
+            출처: 농촌진흥청 농사로 · FAO · EOS Crop Disease Guide
+            </div>
+            </div>
+            """, unsafe_allow_html=True)
