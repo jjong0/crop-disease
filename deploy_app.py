@@ -421,7 +421,7 @@ with col_right:
 
         # 4. 농촌진흥청 검색 바로가기 (짤리지 않은 상세 정보용)
         st.markdown("""
-        <a href="https://ncpms.rda.go.kr/npms/NewIndcUserListR.np" target="_blank" style="text-decoration:none;">
+        <a href="https://ncpms.rda.go.kr/npms/Main.np" target="_blank" style="text-decoration:none;">
             <div style="background-color:#4CAF50; color:white; padding:10px; border-radius:5px; text-align:center; font-weight:bold; margin-top:10px;">
                 🔍 더 자세한 농약 정보 검색 (농촌진흥청 이동)
             </div>
