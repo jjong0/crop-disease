@@ -605,19 +605,26 @@ with col_right:
 
         st.markdown(f"""
         <div style="background:{color}; padding:18px; border-radius:14px;
-                    border-left:6px solid {border}; margin-top:20px;">
+                    border-left:6px solid {border}; margin-top:15px;">
         <b>📈 병해 확산 위험 추세 분석</b><br><br>
 
-        <b>• 예측 병해</b>: {top1_class}<br>
-        <b>• 모델 신뢰도</b>: {top1_prob:.1f}%<br><br>
+        <b>• 모델 예측 결과</b><br>
+        - 주요 병해 유형: <b>{top1_class}</b><br>
+        - 모델 분류 신뢰도: <b>{top1_prob:.1f}%</b><br><br>
 
-        <b>• 현재 환경</b><br>
-        - 기온: {temp}℃<br>
-        - 습도: {humidity}%<br><br>
+        <b>• 환경 조건 분석</b><br>
+        - 평균 기온: {temp}℃<br>
+        - 평균 습도: {humidity}%<br><br>
 
-        <b>▶ 종합 위험 수준</b>: <b>{risk_level}</b>
+        <b>▶ 종합 판단</b><br>
+        병해 확산 위험 추세: <b>{risk_level}</b>
         </div>
         """, unsafe_allow_html=True)
+
+        st.caption(
+            "※ 본 결과는 이미지 분류 모델 출력과 기상 조건을 "
+            "종합한 관리 참고 지표이며, 실제 병 발생 확률을 의미하지 않습니다."
+        )
 
     # =====================================================
     # 📊 병해 취약 환경 & 발병 원인
@@ -648,7 +655,7 @@ with col_right:
                 """
 
             st.markdown(f"""
-            <div style="background:#fff8e1; padding:16px; border-radius:14px;
+        <div style="background:#fff8e1; padding:16px; border-radius:14px;
                         border-left:6px solid #ffeb3b; margin-top:15px;">
             <b>📊 병해 취약 환경 & 발병 원인</b><br><br>
             {risk_html}
