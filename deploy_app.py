@@ -641,27 +641,27 @@ with col_right:
 
             if risk_info:
                 risk_html = f"""
-                <b>• 취약 환경 조건</b><br>
-                - 습도: {risk_info['습도']}<br>
-                - 기온: {risk_info['기온']}<br>
-                - 특징: {risk_info['특징']}<br><br>
-                """
+            <b>• 취약 환경 조건</b><br>
+            - 습도: {risk_info['습도']}<br>
+            - 기온: {risk_info['기온']}<br>
+            - 특징: {risk_info['특징']}<br><br>
+            """
 
             if cause_info:
                 cause_items = "".join([f"<li>{c}</li>" for c in cause_info])
                 cause_html = f"""
-                <b>• 발병 원인</b>
-                <ul style="margin-left:20px;">{cause_items}</ul>
-                """
+            <b>• 발병 원인</b>
+            <ul style="margin-left:20px;">{cause_items}</ul>
+            """
 
             st.markdown(f"""
-        <div style="background:#fff8e1; padding:16px; border-radius:14px;
+            <div style="background:#fff8e1; padding:16px; border-radius:14px;
                         border-left:6px solid #ffeb3b; margin-top:15px;">
             <b>📊 병해 취약 환경 & 발병 원인</b><br><br>
             {risk_html}
             {cause_html}
-            <div style="font-size:0.8rem; color:#555;">
-            출처: 농촌진흥청 농사로 · FAO · EOS Crop Disease Guide
+            <div style="font-size:0.85rem; color:#555;">
+            출처: 농촌진흥청 농사로, EOS Crop Disease Guide, FAO Plant Disease Compendium
             </div>
             </div>
             """, unsafe_allow_html=True)
